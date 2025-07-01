@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:lazy_legs/pages/orders.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import '../models/datePicker.dart';
 import '../services/show_suggestions.dart';
+import '../models/order_model.dart';
+import '../services/order_backend.dart';
+import 'package:lazy_legs/services/location_service.dart';
+
 
 extension CapTitleExtension on String {
   String get titleCapitalizeString => this
@@ -34,26 +36,28 @@ class _PostOrderPageState extends State<PostOrderPage> {
   final dropoffController = TextEditingController();
   final priceController = TextEditingController();
 
-  final List<String> pickupSuggestions = ['Gate 1', 'Gate 2', 'SP'];
-  final List<String> dropoffSuggestions = ['B1', 'B5', 'B10'];
+  final List<String> pickupSuggestions = [];
+  final List<String> dropoffSuggestions = [];
   final List<String> priceSuggestions = ['10', '20', '50'];
 
   void _submitOrder() async {
     if (_formKey.currentState!.validate() && expiry != null) {
       _formKey.currentState!.save();
 
-      await FirebaseFirestore.instance.collection('orders').add({
-        'title': title.titleCapitalizeString,
-        'description': description,
-        'pickUp': pickUp,
-        'dropOff': dropOff,
-        'price': price,
-        'expiry': expiry,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      final order = OrderModel(
+        id: '', // will be assigned by Firestore
+        title: title.titleCapitalizeString,
+        description: description,
+        pickUp: pickUp,
+        dropOff: dropOff,
+        price: price,
+        expiry: expiry!,
+      );
+
+      await OrderBackend().postOrder(order);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Order posted successfully')),
+        const SnackBar(content: Text('Order posted successfully')),
       );
 
       Navigator.pop(context);
@@ -61,14 +65,37 @@ class _PostOrderPageState extends State<PostOrderPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    loadSuggestions();
+  }
+
+  Future<void> loadSuggestions() async {
+    final pickups = await LocationService.fetchPickupLocations();
+    final dropoffs = await LocationService.fetchDropOffLocations();
+    setState(() {
+      pickupSuggestions.clear();
+      pickupSuggestions.addAll(pickups);
+      dropoffSuggestions.clear();
+      dropoffSuggestions.addAll(dropoffs);
+    });
+  }
+
   Widget build(BuildContext context) {
+    const backgroundColor = Color(0xFF1D1D1D);
+    const cardColor = Color(0xFF2A2A2A);
+    const textWhite = Colors.white;
+    const textLight = Color(0xFFC0C0C0);
+    const accentRed = Color(0xFFFF5C5C);
+    const borderColor = Color(0xFF444444);
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade100,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text('Post Order', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: IconThemeData(color: Colors.black),
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        title: const Text('Post Order', style: TextStyle(color: textWhite)),
+        iconTheme: const IconThemeData(color: textWhite),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -76,7 +103,6 @@ class _PostOrderPageState extends State<PostOrderPage> {
           key: _formKey,
           child: ListView(
             children: [
-              // Title
               TextFieldWithSuggestions(
                 label: "Title:",
                 hint: "e.g. Blinkit Package",
@@ -85,18 +111,14 @@ class _PostOrderPageState extends State<PostOrderPage> {
                 validator: (value) => value!.isEmpty ? 'Required' : null,
                 onSaved: (value) => title = value ?? '',
               ),
-
-              // Description
               TextFieldWithSuggestions(
-                label: "Description:",
+                label: "Package Arrival:",
                 hint: "e.g. Groceries, food...",
                 controller: descController,
                 suggestions: [],
                 validator: (value) => value!.isEmpty ? 'Required' : null,
                 onSaved: (value) => description = value ?? '',
               ),
-
-              // Pickup
               TextFieldWithSuggestions(
                 label: "Pickup:",
                 hint: "e.g. Gate 1",
@@ -105,8 +127,6 @@ class _PostOrderPageState extends State<PostOrderPage> {
                 validator: (value) => value!.isEmpty ? 'Required' : null,
                 onSaved: (value) => pickUp = value ?? '',
               ),
-
-              // Dropoff
               TextFieldWithSuggestions(
                 label: "Dropoff:",
                 hint: "e.g. B5",
@@ -115,8 +135,6 @@ class _PostOrderPageState extends State<PostOrderPage> {
                 validator: (value) => value!.isEmpty ? 'Required' : null,
                 onSaved: (value) => dropOff = value ?? '',
               ),
-
-              // Price
               TextFieldWithSuggestions(
                 label: "Price:",
                 hint: "e.g. 20",
@@ -126,65 +144,66 @@ class _PostOrderPageState extends State<PostOrderPage> {
                 onSaved: (value) => price = double.tryParse(value ?? '') ?? 0.0,
               ),
 
-              // Expiry picker
-              Text("Expiry:", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 20),
+
+              const Text("Expiry:", style: TextStyle(color: textWhite, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
               GestureDetector(
                 onTap: () async {
-                final selected = await pickExpiryDateTime(context);
-                if (selected != null) {
-                  setState(() {
-                  expiry = selected;
-                });
-              }
-            },
+                  final selected = await pickExpiryDateTime(context);
+                  if (selected != null) {
+                    setState(() {
+                      expiry = selected;
+                    });
+                  }
+                },
                 child: Container(
-                  padding: EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade400),
+                    border: Border.all(color: borderColor),
                     borderRadius: BorderRadius.circular(4),
+                    color: cardColor,
                   ),
                   child: Text(
-                    expiry != null
-                        ? expiry.toString()
-                        : "Select date & time",
+                    expiry != null ? expiry.toString() : "Select date & time",
                     style: TextStyle(
-                      color: expiry != null ? Colors.black : Colors.grey,
+                      color: expiry != null ? textWhite : textLight,
                     ),
                   ),
                 ),
               ),
               if (expiry == null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 4.0),
-                  child: Text(
-                    "Required",
-                    style: TextStyle(color: Colors.red, fontSize: 12),
-                  ),
+                const Padding(
+                  padding: EdgeInsets.only(top: 4.0),
+                  child: Text("Required", style: TextStyle(color: Colors.red, fontSize: 12)),
                 ),
-              SizedBox(height: 32),
+
+              const SizedBox(height: 32),
 
               ElevatedButton.icon(
                 onPressed: _submitOrder,
-                icon: Icon(Icons.add_card_rounded, color: Colors.black),
-                label: Text("Pay 5© & Post order"),
+                icon: const Icon(Icons.add_card_rounded, color: textWhite),
+                label: const Text("Pay ₹5 & Post Order"),
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  backgroundColor: Colors.blueAccent,
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  textStyle: TextStyle(fontSize: 16),
+                  foregroundColor: textWhite,
+                  backgroundColor: accentRed,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontSize: 16),
                 ),
               ),
-              SizedBox(height: 20.0,),
+
+              const SizedBox(height: 20.0),
+
               ElevatedButton.icon(
                 onPressed: _submitOrder,
-                icon: Icon(Icons.credit_card, color: Colors.black),
-                label: Text("Pay ₹5 & Post Order"),
+                icon: const Icon(Icons.credit_card, color: textWhite),
+                label: const Text("Pay ₹5 & Post Order"),
                 style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.black,
-                  backgroundColor: Colors.white,
-                  padding: EdgeInsets.symmetric(vertical: 14),
-                  textStyle: TextStyle(fontSize: 16),
-                  side: BorderSide(color: Colors.blueAccent, width: 1), // Add border here
+                  foregroundColor: textWhite,
+                  backgroundColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  textStyle: const TextStyle(fontSize: 16),
+                  side: const BorderSide(color: accentRed, width: 1.5),
                 ),
               ),
             ],

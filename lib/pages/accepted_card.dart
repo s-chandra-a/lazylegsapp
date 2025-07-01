@@ -25,16 +25,14 @@ class AcceptedCard extends StatelessWidget {
 
   void cancelDelivery(BuildContext context) async {
     try {
-      // Delete the document from 'accepts' using its doc ID
       await FirebaseFirestore.instance.collection('accepts').doc(acceptId).delete();
 
-      // Reset order's onDelivery field
       await FirebaseFirestore.instance.collection('orders').doc(orderId).update({
         'onDelivery': false,
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Delivery cancelled')),
+        const SnackBar(content: Text('Delivery cancelled')),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -47,14 +45,21 @@ class AcceptedCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: Text('Cancel Delivery'),
-        content: Text('Are you sure you want to cancel this delivery?'),
+        backgroundColor: const Color(0xFF2A2A2A),
+        title: const Text('Cancel Delivery', style: TextStyle(color: Colors.white)),
+        content: const Text('Are you sure you want to cancel this delivery?', style: TextStyle(color: Color(0xFFC0C0C0))),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: Text('No')),
-          TextButton(onPressed: () {
-            Navigator.pop(context);
-            cancelDelivery(context);
-          }, child: Text('Yes')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('No', style: TextStyle(color: Colors.blueAccent)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              cancelDelivery(context);
+            },
+            child: const Text('Yes', style: TextStyle(color: Colors.redAccent)),
+          ),
         ],
       ),
     );
@@ -62,8 +67,14 @@ class AcceptedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const cardColor = Color(0xFF2A2A2A);
+    const textWhite = Colors.white;
+    const textLight = Color(0xFFC0C0C0);
+    const priceColor = Color(0xFFFF5C5C);
+
     return Card(
-      margin: EdgeInsets.only(bottom: 16),
+      color: cardColor,
+      margin: const EdgeInsets.only(bottom: 16),
       elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
@@ -71,99 +82,109 @@ class AcceptedCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header row
+            // Header
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.blue.shade100,
-                  child: Icon(Icons.account_box, color: Colors.blue),
+                const CircleAvatar(
+                  backgroundColor: Color(0xFF3A3A3A),
+                  child: Icon(Icons.account_box, color: textWhite),
                 ),
-                Spacer(),
-                Text("James Cam"),
-                Spacer(),
+                const Spacer(),
+                const Text("James Cam", style: TextStyle(color: textLight)),
+                const Spacer(),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Colors.green.shade600,
+                    color: priceColor,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     '₹$price',
-                    style: TextStyle(color: Colors.black, fontSize: 15),
+                    style: const TextStyle(color: textWhite, fontSize: 15, fontWeight: FontWeight.bold),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 12),
+
+            const SizedBox(height: 12),
+
             Row(
               children: [
-                Icon(Icons.alarm),
-                SizedBox(width: 8.0),
+                const Icon(Icons.alarm, color: textLight),
+                const SizedBox(width: 8.0),
                 Text(
                   'Expires at ${expiry.hour}:${expiry.minute.toString().padLeft(2, '0')}',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  style: const TextStyle(fontSize: 14, color: textLight),
                 ),
               ],
             ),
-            SizedBox(height: 10.0),
-            Text(
-              title,
-              style: TextStyle(fontSize: 22, color: Colors.black),
-            ),
-            Text(description),
-            SizedBox(height: 16),
+
+            const SizedBox(height: 10.0),
+
+            Text(title, style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: textWhite)),
+            const SizedBox(height: 4),
+            Text(description, style: const TextStyle(color: textLight)),
+
+            const SizedBox(height: 16),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   children: [
-                    Text('Pickup', style: TextStyle(fontSize: 12, color: Colors.black)),
-                    Text(pickUp, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text('Pickup', style: TextStyle(fontSize: 12, color: textLight)),
+                    Text(pickUp, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textWhite)),
                   ],
                 ),
-                Column(children: [
-                  Text('..............', style: TextStyle(fontSize: 12, color: Colors.black)),
-                ]),
+                const Text('→', style: TextStyle(fontSize: 16, color: textLight)),
                 Column(
                   children: [
-                    Text('Drop Off', style: TextStyle(fontSize: 12, color: Colors.black)),
-                    Text(dropOff, style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    const Text('Drop Off', style: TextStyle(fontSize: 12, color: textLight)),
+                    Text(dropOff, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: textWhite)),
                   ],
                 ),
               ],
             ),
-            SizedBox(height: 20),
+
+            const SizedBox(height: 20),
+
             Row(
               children: [
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // TODO: Implement chat navigation
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Chat not implemented yet")));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Chat not implemented yet")),
+                      );
                     },
-                    icon: Icon(Icons.chat),
-                    label: Text("Chat"),
+                    icon: const Icon(Icons.chat, color: textWhite),
+                    label: const Text("Chat", style: TextStyle(color: textWhite)),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade100,
-                      foregroundColor: Colors.black,
+                      backgroundColor: Colors.blueAccent,
+                      foregroundColor: textWhite,
                     ),
                   ),
                 ),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () => confirmCancel(context),
-                    icon: Icon(Icons.cancel),
-                    label: Text("Cancel Delivery", style: TextStyle(fontSize: 12), overflow: TextOverflow.ellipsis, softWrap: false),
+                    icon: const Icon(Icons.cancel, color: Colors.white),
+                    label: const Text(
+                      "Cancel Delivery",
+                      style: TextStyle(fontSize: 12, color: Colors.white),
+                      overflow: TextOverflow.ellipsis,
+                      softWrap: false,
+                    ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade100,
-                      foregroundColor: Colors.red.shade900,
+                      backgroundColor: Colors.redAccent.shade200,
+                      foregroundColor: Colors.white,
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 25.0,),
+            const SizedBox(height: 25),
           ],
         ),
       ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:lazy_legs/pages/bottom_navigation.dart';
 import 'package:lazy_legs/pages/orders.dart';
 import 'package:firebase_core/firebase_core.dart';
 
@@ -42,7 +43,7 @@ class MyApp extends StatelessWidget {
           headlineMedium: TextStyle(color: Colors.black, fontSize: 24),
         ),
       ),
-      home: Orders(),
+      home: BottomNavigation(),
     );
   }
 }

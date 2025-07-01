@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:lazy_legs/pages/posted_orders.dart';
+import 'package:lazy_legs/pages/wallet_page.dart';
 import 'accepted_card.dart';
 
 class ChatPage extends StatelessWidget {
@@ -8,90 +9,105 @@ class ChatPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    const backgroundColor = Color(0xFF1D1D1D);
+    const cardColor = Color(0xFF2A2A2A);
+    const textWhite = Colors.white;
+    const textLight = Color(0xFFC0C0C0);
+    const accentRed = Color(0xFFFF5C5C);
+
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Chats', style: TextStyle(color: Colors.black)),
-        backgroundColor: Colors.white,
-        elevation: 1,
-        iconTheme: IconThemeData(color: Colors.black),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      backgroundColor: backgroundColor,
+      appBar:AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        automaticallyImplyLeading: false,
+        title: Row(
           children: [
-            Text("Orders accepted by you", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 16),
-            Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('accepts')
-                    .where('onDelivery', isEqualTo: true)
-                    .snapshots(),
-                builder: (context, snapshot) {
-                  if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-
-                  final docs = snapshot.data!.docs.where((doc) {
-                    final data = doc.data() as Map<String, dynamic>;
-                    return (data['isAccepted'] != true) && (data['onDelivery'] == true);
-                  }).toList();
-                  if (docs.isEmpty) return Center(child: Text("No orders accepted yet."));
-
-                  return ListView.builder(
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final data = docs[index].data() as Map<String, dynamic>;
-                      return AcceptedCard(
-                        acceptId: docs[index].id,
-                        orderId: data['orderId'],
-                        title: data['title'] ?? 'No Title',
-                        description: data['description'] ?? '',
-                        pickUp: data['pickUp'] ?? '',
-                        dropOff: data['dropOff'] ?? '',
-                        price: (data['price'] ?? 0).toDouble(),
-                        expiry: (data['expiry'] as Timestamp).toDate(),
-                      );
-                    },
-                  );
-                },
+            const Text('Orders', style: TextStyle(color: textWhite, fontSize: 20, fontWeight: FontWeight.bold)),
+            const Spacer(),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const WalletPage()));
+              },
+              child: const CircleAvatar(
+                backgroundColor: Color(0xFF2A2A2A),
+                radius: 18,
+                child: Icon(Icons.person, color: textWhite),
               ),
             ),
           ],
         ),
       ),
-      floatingActionButton: SizedBox(
-        width: MediaQuery.of(context).size.width - 32,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const PostedOrdersPage()),
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            padding: EdgeInsets.symmetric(vertical: 16),
-            backgroundColor: Colors.blue.shade100,
-            foregroundColor: Colors.black,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            Text(
+              "Orders accepted by you",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textWhite),
             ),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text("Orders posted by you"),
-              SizedBox(width: 8),
-              Icon(Icons.arrow_forward, size: 20),
-            ],
-          ),
+            SizedBox(height: 16),
+            _AcceptedOrdersList(),
+          ],
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+}
 
+class _AcceptedOrdersList extends StatelessWidget {
+  const _AcceptedOrdersList();
+
+  @override
+  Widget build(BuildContext context) {
+    const textWhite = Colors.white;
+    const textLight = Color(0xFFC0C0C0);
+
+    return Expanded(
+      child: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('accepts')
+            .where('onDelivery', isEqualTo: true)
+            .snapshots(),
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return const Center(child: Text('Error loading orders', style: TextStyle(color: Colors.red)));
+          }
+
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final docs = snapshot.data!.docs.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return (data['isAccepted'] != true) && (data['onDelivery'] == true);
+          }).toList();
+
+          if (docs.isEmpty) {
+            return const Center(
+              child: Text("No orders accepted yet.", style: TextStyle(color: textLight)),
+            );
+          }
+
+          return ListView.builder(
+            itemCount: docs.length,
+            itemBuilder: (context, index) {
+              final data = docs[index].data() as Map<String, dynamic>;
+              return AcceptedCard(
+                acceptId: docs[index].id,
+                orderId: data['orderId'],
+                title: data['title'] ?? 'No Title',
+                description: data['description'] ?? '',
+                pickUp: data['pickUp'] ?? '',
+                dropOff: data['dropOff'] ?? '',
+                price: (data['price'] ?? 0).toDouble(),
+                expiry: (data['expiry'] as Timestamp).toDate(),
+              );
+            },
+          );
+        },
+      ),
     );
   }
 }

@@ -1,39 +1,24 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lazy_legs/services/calculateTimeRemaining.dart';
+import '../models/order_model.dart';
+import '../services/order_backend.dart';
 
-class OrderCard extends StatefulWidget {
-  final String title;
-  final DateTime expiry;
-  final String pickUp;
-  final String description;
-  final String dropOff;
-  final double price;
-  final bool isAccepted; //true after successful delivery
-  final bool onDelivery; // true after someone accepts to deliver
+class OrderCard extends StatelessWidget {
+  final OrderModel order;
 
-   const OrderCard({
-    super.key,
-    required this.title,
-    required this.expiry,
-    required this.pickUp,
-    required this.description,
-    required this.dropOff,
-    required this.price,
-    this.isAccepted = false,
-     this.onDelivery = false,
-  });
+  const OrderCard({super.key, required this.order});
 
-  @override
-  State<OrderCard> createState() => _OrderCardState();
-}
-
-class _OrderCardState extends State<OrderCard> {
   @override
   Widget build(BuildContext context) {
-    Color cardColor = widget.onDelivery ? Colors.grey.shade300 : Colors.white;
-    int timeRemaining = calculateMinutesLeft(widget.expiry);
+    const cardColor = Color(0xFF2A2A2A);
+    const textWhite = Colors.white;
+    const textLight = Color(0xFFC0C0C0);
+    const badgeColor = Color(0xFFFF5C5C);
+    const iconBg = Color(0xFF383838);
+
+    int timeRemaining = calculateMinutesLeft(order.expiry);
+
     return Card(
       elevation: 4,
       color: cardColor,
@@ -45,154 +30,119 @@ class _OrderCardState extends State<OrderCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Header Row
             Row(
               children: [
-                CircleAvatar(
-                  backgroundColor: Colors.blue.shade100,
-                  child: Icon(Icons.account_box, color: Colors.blue),
-                ),
-                Spacer(),
-                Text("James Cam"),
-                Spacer(),
-                  Container(
-                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: Colors.green.shade600,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '₹${widget.price}',
-                      style: TextStyle(color: Colors.black, fontSize: 15),
-                    ),
+                // const CircleAvatar(
+                //   backgroundColor: iconBg,
+                //   child: Icon(Icons.account_box, color: Colors.white),
+                // ),
+                // const SizedBox(width: 12),
+                const Text("James Cam", style: TextStyle(color: textLight)),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: badgeColor,
+                    borderRadius: BorderRadius.circular(20),
                   ),
-              ],
-            ),
-            SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(Icons.alarm),
-                SizedBox(width: 8.0,),
-                Text(
-                  'Expires in $timeRemaining mins',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                  child: Text(
+                    '₹${order.price}',
+                    style: const TextStyle(color: textWhite, fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 10.0,),
-            Text(
-              widget.title,
-              style: TextStyle(
-                fontSize: 22,
-                color: Colors.black,
-              ),
+
+            const SizedBox(height: 12),
+
+            // Expiry
+            Row(
+              children: const [
+                Icon(Icons.alarm, color: textLight, size: 18),
+                SizedBox(width: 8.0),
+                Text('Expires in ', style: TextStyle(fontSize: 14, color: textLight)),
+              ],
             ),
-            Text(widget.description),
-            if (widget.onDelivery)
+            Text(
+              '$timeRemaining mins',
+              style: const TextStyle(fontSize: 14, color: textLight),
+            ),
+
+            const SizedBox(height: 10.0),
+
+            // Title and Description
+            Text(
+              order.title,
+              style: const TextStyle(fontSize: 22, color: textWhite, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(order.description, style: const TextStyle(color: textLight)),
+
+            // Delivery Status
+            if (order.onDelivery)
               Padding(
                 padding: const EdgeInsets.only(top: 8.0),
                 child: Row(
                   children: [
-                    Icon(Icons.directions_bike_rounded),
-                    SizedBox(width: 4.0,),
+                    const Icon(Icons.directions_bike_rounded, color: Colors.greenAccent),
+                    const SizedBox(width: 4.0),
                     Text(
                       "Package accepted by a deliverer",
-                      style: TextStyle(fontSize: 14, color: Colors.green.shade900),
+                      style: TextStyle(fontSize: 14, color: Colors.green.shade400),
                     ),
                   ],
                 ),
               ),
-            SizedBox(height: 16),
+
+            const SizedBox(height: 16),
+
+            // Pickup and Drop Off Info
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Column(
                   children: [
-                    Text(
-                      'Pickup',
-                      style: TextStyle(fontSize: 12, color: Colors.black),
-                    ),
-                    Text(
-                      widget.pickUp,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
+                    const Text('Pickup', style: TextStyle(fontSize: 12, color: textLight)),
+                    Text(order.pickUp, style: const TextStyle(fontSize: 16, color: textWhite, fontWeight: FontWeight.bold)),
                   ],
                 ),
+                const Text('→', style: TextStyle(fontSize: 20, color: textLight)),
                 Column(
                   children: [
-                    Text(
-                      '..............',
-                      style: TextStyle(fontSize: 12, color: Colors.black),
-                    ),
+                    const Text('Drop Off', style: TextStyle(fontSize: 12, color: textLight)),
+                    Text(order.dropOff, style: const TextStyle(fontSize: 16, color: textWhite, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                Column(
-                  children: [
-                    Text(
-                      'Drop Off',
-                      style: TextStyle(fontSize: 12, color: Colors.black),
-                    ),
-                    Text(
-                      widget.dropOff,
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                widget.onDelivery ? SizedBox(width: 40)
-                :GestureDetector(
-                  onTap: (){
-                    //make the background color red
-                    Fluttertoast.showToast(
-                      msg: "Double tap to confirm order",
-                      toastLength: Toast.LENGTH_SHORT,
-                      gravity: ToastGravity.BOTTOM,
-                    );
-                  },
-                  onDoubleTap: () async {
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Accept Order Button
+            if (!order.onDelivery)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () async {
                     Fluttertoast.showToast(
                       msg: "You've accepted the order",
                       toastLength: Toast.LENGTH_SHORT,
                       gravity: ToastGravity.BOTTOM,
                     );
-                    final orders = await FirebaseFirestore.instance
-                        .collection('orders')
-                        .where('title', isEqualTo: widget.title)
-                        .where('expiry', isEqualTo: widget.expiry)
-                        .limit(1)
-                        .get();
 
-                    if (orders.docs.isNotEmpty) {
-                      final orderDoc = orders.docs.first;
-                      final orderId = orderDoc.id;
-                      final orderData = orderDoc.data();
-
-                      // Update the order's onDelivery status
-                      await FirebaseFirestore.instance
-                          .collection('orders')
-                          .doc(orderId)
-                          .update({'onDelivery': true});
-
-                      // Log acceptance in 'accepts' collection
-                      await FirebaseFirestore.instance.collection('accepts').add({
-                        'orderId': orderId,
-                        'title': orderData['title'],
-                        'description': orderData['description'],
-                        'pickUp': orderData['pickUp'],
-                        'dropOff': orderData['dropOff'],
-                        'price': orderData['price'],
-                        'expiry': orderData['expiry'],
-                        'acceptedAt': DateTime.now(),
-                        'onDelivery': true,
-                      });
-                    }
-
+                    final backend = OrderBackend();
+                    await backend.acceptOrder(order);
                   },
-                  child: CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: Icon(Icons.check, color: Colors.black),
+                  icon: const Icon(Icons.check_circle, color: Colors.white),
+                  label: const Text("Accept Order", style: TextStyle(color: Colors.white)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: badgeColor,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-                )
-              ],
-            )
+                ),
+              ),
           ],
         ),
       ),
