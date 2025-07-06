@@ -99,7 +99,6 @@ class PostedOrdersPage extends StatelessWidget {
                           .delete();
                     }
 
-                    // ✅ Add this
                     await DashboardBackend().logOrderDelivered();
 
                     ScaffoldMessenger.of(context).showSnackBar(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
+import '../services/dashboard_backend.dart';
+
 class AcceptedCard extends StatelessWidget {
   final String orderId;
   final String title;
@@ -54,9 +56,10 @@ class AcceptedCard extends StatelessWidget {
             child: const Text('No', style: TextStyle(color: Colors.blueAccent)),
           ),
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               cancelDelivery(context);
+              await DashboardBackend().logOrderCancelled();
             },
             child: const Text('Yes', style: TextStyle(color: Colors.redAccent)),
           ),

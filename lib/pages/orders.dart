@@ -140,6 +140,7 @@ class _OrdersState extends State<Orders> {
 
 
               return ListView.builder(
+                padding: const EdgeInsets.only(bottom: 100),
                 itemCount: orders.length,
                 itemBuilder: (context, index) {
                   return OrderCard(order: orders[index]);

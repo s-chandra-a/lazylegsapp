@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:lazy_legs/services/calculateTimeRemaining.dart';
 import '../models/order_model.dart';
+import '../services/dashboard_backend.dart';
 import '../services/order_backend.dart';
 
 class OrderCard extends StatelessWidget {
@@ -58,15 +59,15 @@ class OrderCard extends StatelessWidget {
 
             // Expiry
             Row(
-              children: const [
-                Icon(Icons.alarm, color: textLight, size: 18),
-                SizedBox(width: 8.0),
-                Text('Expires in ', style: TextStyle(fontSize: 14, color: textLight)),
+              children: [
+                const Icon(Icons.alarm, color: textLight, size: 18),
+                const SizedBox(width: 8.0),
+                Text(
+                  'Expires in $timeRemaining mins',
+                  style: const TextStyle(fontSize: 14, color: textLight),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ],
-            ),
-            Text(
-              '$timeRemaining mins',
-              style: const TextStyle(fontSize: 14, color: textLight),
             ),
 
             const SizedBox(height: 10.0),
@@ -133,6 +134,7 @@ class OrderCard extends StatelessWidget {
 
                     final backend = OrderBackend();
                     await backend.acceptOrder(order);
+                    await DashboardBackend().logOrderAccepted();
                   },
                   icon: const Icon(Icons.check_circle, color: Colors.white),
                   label: const Text("Accept Order", style: TextStyle(color: Colors.white)),

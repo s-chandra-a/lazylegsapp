@@ -8,8 +8,12 @@ class LocationService {
         .get();
 
     final data = snapshot.data();
-    if (data != null && data['locations'] is List) {
-      return List<String>.from(data['locations']);
+    if (data != null && data['locations'] is Map) {
+      final locationsMap = Map<String, dynamic>.from(data['locations']);
+      return locationsMap.entries
+          .where((entry) => entry.value == true)
+          .map((entry) => entry.key)
+          .toList();
     }
     return [];
   }
@@ -21,9 +25,14 @@ class LocationService {
         .get();
 
     final data = snapshot.data();
-    if (data != null && data['locations'] is List) {
-      return List<String>.from(data['locations']);
+    if (data != null && data['locations'] is Map) {
+      final locationsMap = Map<String, dynamic>.from(data['locations']);
+      return locationsMap.entries
+          .where((entry) => entry.value == true)
+          .map((entry) => entry.key)
+          .toList();
     }
     return [];
   }
+
 }

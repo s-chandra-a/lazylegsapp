@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lazy_legs/services/dashboard_backend.dart';
 import '../models/datePicker.dart';
 import '../services/show_suggestions.dart';
 import '../models/order_model.dart';
@@ -55,6 +56,7 @@ class _PostOrderPageState extends State<PostOrderPage> {
       );
 
       await OrderBackend().postOrder(order);
+      await DashboardBackend().logOrderPosted();
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Order posted successfully')),

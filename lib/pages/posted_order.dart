@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/dashboard_backend.dart';
+
 class PostedOrder extends StatelessWidget {
   final String orderId;
   final String title;
@@ -38,9 +40,10 @@ class PostedOrder extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
               onMarkAsDelivered();
+              await DashboardBackend().logOrderDelivered();
             },
             child: const Text("Okay", style: TextStyle(color: Colors.blueAccent)),
           ),
